@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tap Water Contamination Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <h1 class="text-4xl font-bold text-center text-blue-600">Tap Water Contamination Search</h1>
+        <form id="zipForm" class="mt-6 text-center">
+            <input type="text" name="zip" placeholder="Enter ZIP Code" required
+                   class="border border-gray-400 p-2 rounded-md">
+            <button type="submit" class="bg-blue-500 text-white p-2 rounded-md">Search</button>
+        </form>
+
+        <div id="results" class="mt-8"></div>
+    </div>
+
+    <script>
+        document.getElementById('zipForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const zip = formData.get('zip');
+
+            try {
+                const response = await fetch(`/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ zip })  // Send ZIP code as JSON
+                });
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('results').innerHTML = `<p class="text-red-600">Error: ${data.error}</p>`;
+                    return;
+                }
+
+                // Display data
+                let html = `<h2 class="text-2xl font-semibold mt-6">Results for ${zip}</h2>`;
+                if (data.featured) {
+                    html += `<h3 class="text-xl mt-4">Featured Utility</h3>
+                            <p>Name: ${data.featured.name}</p>
+                            <p>City: ${data.featured.city}</p>
+                            <p>People Served: ${data.featured.served}</p>`;
+                }
+
+                html += `<h3 class="text-xl mt-4">Additional Utilities</h3><ul>`;
+                data.utilities.forEach(utility => {
+                    html += `<li>${utility.name} - ${utility.city} (Served: ${utility.population_served})</li>`;
+                });
+                html += `</ul>`;
+
+                document.getElementById('results').innerHTML = html;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+            }
+        });
+
+    </script>
+</body>
+</html>
